@@ -13,7 +13,7 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
- #ainer rm -f fruitz-villa
+ #ainer rm -f my_portfolio
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
