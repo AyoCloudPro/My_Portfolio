@@ -41,9 +41,34 @@ jobs:
           chmod 400 key
           
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker pull ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
+          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker stop my_portfolio || true"
+          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker rm my_portfolio || true"
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker run -d -p 8080:80 --restart=always --name my_portfolio ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker ps"
 
+      - name: Set up Reverse Proxy (Optional)
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} << 'EOF'
+            sudo bash -c 'cat <<EOL > /etc/nginx/sites-available/my_portfolio
+            server {
+                listen 80;
+                server_name digitalmages.online www.digitalmages.online;
+
+                location / {
+                    proxy_pass http://localhost:8080;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+            }
+            EOL'
+
+            sudo ln -s /etc/nginx/sites-available/my_portfolio /etc/nginx/sites-enabled/
+
+            sudo systemctl restart nginx
+          EOF
+      
       - name: Check Container Logs
         run: |
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker logs my_portfolio"
