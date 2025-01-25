@@ -51,22 +51,12 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} << 'EOF'
             sudo apt update
             sudo apt install -y nginx
-            sudo bash -c 'cat <<EOL > /etc/nginx/sites-available/my_portfolio
-            server {
-                listen 8080;
-                server_name digitalmages.online www.digitalmages.online;
 
-                location / {
-                    proxy_pass http://localhost:8080;
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
-                }
-            }
-          EOL'
+            sudo rm -f /etc/nginx/sites-enabled/my_portfolio
 
             sudo ln -s /etc/nginx/sites-available/my_portfolio /etc/nginx/sites-enabled/
+
+            sudo nginx -t
 
             sudo systemctl restart nginx
           EOF
