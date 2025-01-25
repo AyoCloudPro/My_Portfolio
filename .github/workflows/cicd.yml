@@ -9,7 +9,6 @@ jobs:
     steps: 
       -
         name: Stop and remove existing container
-        uses: actions/checkout@v3
         run: |
           docker ps -q --filter "my_portfolio" | grep -q . && docker stop my_portfolio || echo "No container to stop"
           docker ps -a -q --filter "name=my_portfolio" | grep -q . && docker rm my_portfolio || echo "No container to remove"
