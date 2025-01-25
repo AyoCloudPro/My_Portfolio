@@ -46,24 +46,39 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker run -d -p 8080:80 --restart=always --name my_portfolio ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker ps"
 
-      # - name: Set up Reverse Proxy
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} << 'EOF'
-      #       sudo apt update
-      #       sudo apt install -y nginx
+      - name: Set Up Reverse Proxy and SSL
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} << 'EOF'
+            sudo apt update
+            sudo apt install -y nginx certbot python3-certbot-nginx
 
-      #       sudo rm -f /etc/nginx/sites-enabled/my_portfolio
+            cat << NGINX_CONF | sudo tee /etc/nginx/sites-available/my_portfolio
+            server {
+                listen 80;
+                server_name digitalmages.online www.digitalmages.online;
 
-      #       sudo ln -s /etc/nginx/sites-available/my_portfolio /etc/nginx/sites-enabled/
+                location / {
+                    proxy_pass http://127.0.0.1:8080;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                }
+            }
+            NGINX_CONF
 
-      #       sudo nginx -t
+            # Enable the site
+            sudo ln -sf /etc/nginx/sites-available/my_portfolio /etc/nginx/sites-enabled/
 
-      #       sudo systemctl restart nginx
-      #     EOF
-      
-      # - name: Check Nginx Service Status
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "sudo systemctl status nginx.service || true"
+            # Obtain an SSL certificate
+            sudo certbot --nginx --non-interactive --agree-tos --redirect \
+              -m ayomideolalere374@gmail.com -d digitalmages.online -d www.digitalmages.online
+
+            # Reload NGINX
+            sudo nginx -t && sudo systemctl reload nginx
+
+            # Set up automatic SSL certificate renewal
+            echo "0 3 * * * root certbot renew --quiet && systemctl reload nginx" | sudo tee -a /etc/crontab
+          EOF
+
 
       - name: Check Container Logs
         run: |
