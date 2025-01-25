@@ -41,7 +41,7 @@ jobs:
           chmod 400 key
           
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker pull ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
-          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker run -d -p 80:80 --restart=always --name my_portfolio ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
+          ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker run -d -p 8080:80 --restart=always --name my_portfolio ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker ps"
 
       - name: Check Container Logs
