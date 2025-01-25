@@ -46,9 +46,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker run -d -p 8080:80 --restart=always --name my_portfolio ${{ vars.DOCKERHUB_USERNAME }}/my_portfolio:latest"
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} "docker ps"
 
-      - name: Set up Reverse Proxy (Optional)
+      - name: Set up Reverse Proxy
         run: |
           ssh -o StrictHostKeyChecking=no -i key ${{secrets.USERNAME}}@${{secrets.SERVER_IP}} << 'EOF'
+            sudo apt update
+            sudo apt install -y nginx
             sudo bash -c 'cat <<EOL > /etc/nginx/sites-available/my_portfolio
             server {
                 listen 80;
